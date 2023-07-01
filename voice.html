@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text-to-Speech Converter</title>
+</head>
+<body>
+    <h1>Text-to-Speech Converter</h1>
+
+    <textarea id="textToConvert" rows="5" cols="50" placeholder="Enter text to convert"></textarea><br>
+
+    <label for="voiceSelect">Select Voice:</label>
+    <select id="voiceSelect"></select><br>
+
+    <label for="pitchSlider">Pitch:</label>
+    <input type="range" id="pitchSlider" min="0" max="2" step="0.1" value="1"><br>
+
+    <label for="rateSlider">Rate:</label>
+    <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1"><br>
+
+    <button onclick="convertTextToSpeech()">Convert to Speech</button>
+    <button onclick="downloadSpeech()">Download as MP3</button>
+
+    <script>
+        // Function to populate the voice selection dropdown
+        function populateVoiceList() {
+            if (typeof speechSynthesis === 'undefined') {
+                return;
+            }
+
+            var voices = speechSynthesis.getVoices();
+            var voiceSelect = document.getElementById('voiceSelect');
+            voiceSelect.innerHTML = '';
+
+            for (var i = 0; i < voices.length; i++) {
+                var option = document.createElement('option');
+                option.textContent = voices[i].name + ' (' + voices[i].lang + ')';
+
+                if (voices[i].default) {
+                    option.textContent += ' -- Default';
+                }
+
+                option.setAttribute('data-lang', voices[i].lang);
+                option.setAttribute('data-name', voices[i].name);
+                voiceSelect.appendChild(option);
+            }
+        }
+
+        populateVoiceList();
+
+        // Event listener to repopulate voice list if voices change
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
+        // Function to convert text to speech
+        function convertTextToSpeech() {
+            var text = document.getElementById('textToConvert').value;
+
+            if (text.trim() === '') {
+                alert('Please enter some text.');
+                return;
+            }
+
+            var voiceSelect = document.getElementById('voiceSelect');
+            var selectedVoice = voiceSelect.selectedOptions[0].getAttribute('data-name');
+            var selectedPitch = document.getElementById('pitchSlider').value;
+            var selectedRate = document.getElementById('rateSlider').value;
+
+            var utterance = new SpeechSynthesisUtterance(text);
+            var voices = speechSynthesis.getVoices();
+            
+            for (var i = 0; i < voices.length; i++) {
+                if (voices[i].name === selectedVoice) {
+                    utterance.voice = voices[i];
+                    break;
+                }
+            }
+
+            utterance.pitch = selectedPitch;
+            utterance.rate = selectedRate;
+
+            speechSynthesis.speak(utterance);
+        }
+
+        // Function to download speech as MP3
+        function downloadSpeech() {
+            var text = document.getElementById('textToConvert').value;
+
+            if (text.trim() === '') {
+                alert('Please enter some text.');
+                return;
+            }
+
+            var voiceSelect = document.getElementById('voiceSelect');
+            var selectedVoice = voiceSelect.selectedOptions[0].getAttribute('data-name');
+            var selectedPitch = document.getElementById('pitchSlider').value;
+            var selectedRate = document.getElementById('rateSlider').value;
+
+            var utterance = new SpeechSynthesisUtterance(text);
+            var voices = speechSynthesis.getVoices();
+
+            for (var i = 0; i < voices.length; i++) {
+                if (voices[i].name === selectedVoice) {
+                    utterance.voice = voices[i];
+                    break;
+                }
+            }
+
+            utterance.pitch = selectedPitch;
+            utterance.rate = selectedRate;
+
+            var synthesis = new SpeechSynthesis();
+            synthesis.speak(utterance);
+
+            var audio = new Audio();
+            audio.src = URL.createObjectURL(new Blob([utterance.text], { type: 'audio/mpeg' }));
+            audio.download = 'speech.mp3';
+            audio.click();
+        }
+    </script>
+</body>
+</html>
